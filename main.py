@@ -18,32 +18,34 @@ class Th(Thread):
 
     def run(self):
 
-        # Criando janela para selecionar o arquivo
+        #Criando janela para selecionar o arquivo
         root = tk.Tk()
         root.withdraw()
         arquivo = filedialog.askopenfilename()
 
-        # Abrindo a planilha selecionada
+        #Abrindo a planilha selecionada
         pastadetrabalho = xlwings.Book(arquivo)
 
-        # Abre o Excel em tela cheia
-        xl = win32.gencache.EnsureDispatch('Excel.Application')
-        xl.Visible = True
-        xl.Workbooks.Open(arquivo)
-        xl.ActiveWindow.WindowState = win32.constants.xlMaximized
+        #Abre o Excel em tela cheia
+        excel_window = pyautogui.getWindowsWithTitle("Excel")[0]
+        excel_window.maximize()
+        #xl = win32.gencache.EnsureDispatch('Excel.Application')
+        #xl.Visible = True
+        #xl.Workbooks.Open(arquivo)
+        #xl.ActiveWindow.WindowState = win32.constants.xlMaximized
 
-        # Selecionando a planilha
+        #Selecionando a planilha
         planilha = pastadetrabalho.sheets["Planilha1"]
 
-        # Lendo os dados da coluna A e E
+        #Lendo os dados da coluna A e E
         coluna_a = planilha.range("A1:A" + str(planilha.cells.last_cell.row)).value
         coluna_e = planilha.range("E1:E" + str(planilha.cells.last_cell.row)).value
 
-        # Lista para armazenar as linhas onde ocorrem as alterações de data
+        #Lista para armazenar as linhas onde ocorrem as alterações de data
         alteracoes_data = []
         linhas_mesma_data = []
 
-        # inserindo nova linha
+        #inserindo nova linha
         numero_linha = 1
         planilha.api.Rows(numero_linha).Insert()
         linhatexto1 = 1
@@ -55,7 +57,7 @@ class Th(Thread):
         planilha.range('{}{}'.format(colunavalor1, linhatexto1)).value = valortexto1
         planilha.range('{}{}'.format(colunavalor2, linhatexto2)).value = valortexto2
 
-        # Loop para encontrar as alterações de data
+        #Loop para encontrar as alterações de data
         for i in range(1, len(coluna_a)):
             if coluna_a[i] != coluna_a[i - 1]:
                 alteracoes_data.append(i + 1)  # Adiciona a linha onde ocorreu a alteração de data
@@ -64,7 +66,7 @@ class Th(Thread):
             if coluna_a[j] == coluna_a[j - 1]:
                 linhas_mesma_data.append(j)
 
-        # Loop para inserir os dados na planilha
+        #Loop para inserir os dados na planilha
         selecao = alteracoes_data[0]
         selecao2 = selecao - 1
         termo = linhas_mesma_data[1]
@@ -88,25 +90,25 @@ class Th(Thread):
             pyautogui.press('right')
             termo = auto + 2
 
-        # Copiando dados inseridos para a planilha 2
+        #Copiando dados inseridos para a planilha 2
         faixa_origem = 'F:G'
         valores = planilha.range(faixa_origem).value
         nova_planilha = pastadetrabalho.sheets.add('Planilha 2')
         nova_planilha.range('A1').value = valores
 
-        # Selecionar a faixa de células com os dados na nova planilha
+        #Selecionar a faixa de células com os dados na nova planilha
         faixa_dados = nova_planilha.range('A1:B{}'.format(nova_planilha.cells.last_cell.row))
 
-        # Definir o filtro para excluir as linhas vazias na coluna A
+        #Definir o filtro para excluir as linhas vazias na coluna A
         faixa_dados.api.AutoFilter(Field=1, Criteria1="<>")
 
-        # Obter a coluna A filtrada (coluna A sem as linhas vazias)
+        #Obter a coluna A filtrada (coluna A sem as linhas vazias)
         coluna_a_filtrada = nova_planilha.range('A2').expand('down').value
 
-        # Remover o filtro
+        #Remover o filtro
         faixa_dados.api.AutoFilterMode = False
 
-        # Deletar as linhas vazias na coluna A
+        #Deletar as linhas vazias na coluna A
         linhas_deletar = []
         for i, valor in enumerate(coluna_a_filtrada, start=2):
             if not valor:
